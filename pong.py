@@ -1,3 +1,12 @@
+"""
+Ryan Grant, Michael Holt, Mitch Olson, Stephen Rowley
+CSCI 315
+Final Project
+pong.py
+This file is used to gather training data by allowing humans to control
+both pong paddles.
+"""
+
 import pygame
 import pickle
 
@@ -67,12 +76,19 @@ class Enemy():
 class Ball():
         def __init__(self):
                 self.x, self.y = SCR_WID/2, SCR_HEI/2
+                # The last index below represents the previous y position
+                # The first index below represents the eighth previous y postion
+                self.y_prev_list = [0,0,0,0,0,0,0,0]
                 self.speed_x = -3
                 self.speed_y = 3
                 self.size = 8
                 
         def movement(self):
                 self.x += self.speed_x
+                # Update previous y values before changing self.y
+                for i in range(len(self.y_prev_list)-1):
+                        self.y_prev_list[i] = self.y_prev_list[i+1]
+                self.y_prev_list[len(self.y_prev_list)-1] = self.y
                 self.y += self.speed_y
                 
                 #wall col
@@ -98,7 +114,10 @@ class Ball():
                                         self.speed_x *= -1
                                         # Also save the player's and ball's y position (TRAINING INPUT)
                                         global global_training_input
-                                        global_training_input.append((player.y, self.y))
+                                        # IF THE BALL GETS STUCK ON A PADDLE, GET TOO MANY INPUTS
+                                        # We pickle the ball's previous two y values, its current value,
+                                        # and the player's y position)
+                                        global_training_input.append([player.y] + self.y_prev_list + [self.y])
                                         break
                         n += 1
                 #enemy
@@ -146,9 +165,10 @@ def load_data(fileName):
 while True:
         #process
         for event in pygame.event.get():
+                        # MUST X OUT OF GAME AND HIT "CANCEL" ON POP-UP TO ENTER BELOW IF
                         if event.type == pygame.QUIT:
                                 print("Game exited by user")
-                                save_data("training_data.dat")
+                                #save_data("./pickled_data/training_data_10_inputs_4.dat")
                                 exit()
         ##process
         #logic
